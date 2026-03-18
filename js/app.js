@@ -14,9 +14,8 @@ Chart.defaults.color = '#8b949e';
 Chart.defaults.borderColor = '#30363d';
 
 // DOM Elements
-const searchInput = document.getElementById('searchInput');
+const publisherSelect = document.getElementById('publisherSelect');
 const searchBtn = document.getElementById('searchBtn');
-const searchHint = document.getElementById('searchHint');
 const errorSection = document.getElementById('errorSection');
 const errorMessage = document.getElementById('errorMessage');
 const resultsSection = document.getElementById('resultsSection');
@@ -24,38 +23,21 @@ const resultsSection = document.getElementById('resultsSection');
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     loadEcosystemData();
-    
-    // Enter key to search
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
-    });
 
-    // Auto-detect input type
-    searchInput.addEventListener('input', () => {
-        const value = searchInput.value.trim();
-        if (!value) {
-            searchHint.textContent = 'Auto-detects ID vs Domain';
-        } else if (isNumeric(value)) {
-            searchHint.textContent = '🔢 Detected: Publisher ID';
-        } else {
-            searchHint.textContent = '🌐 Detected: Domain';
+    // Load on selection change
+    publisherSelect.addEventListener('change', () => {
+        if (publisherSelect.value) {
+            performSearch();
         }
     });
 });
 
-// Check if input is numeric (publisher ID)
-function isNumeric(value) {
-    return /^\d+$/.test(value);
-}
-
 // Perform search
 async function performSearch() {
-    const query = searchInput.value.trim();
+    const domain = publisherSelect.value;
     
-    if (!query) {
-        showError('Please enter a Publisher ID or Domain');
+    if (!domain) {
+        showError('Please select a publisher');
         return;
     }
 
@@ -73,27 +55,10 @@ async function performSearch() {
             publishersCache = await response.json();
         }
 
-        // Search by ID or domain
-        let data;
-        if (isNumeric(query)) {
-            data = publishersCache[query];
-        } else {
-            const domain = query.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-            data = publishersCache[domain];
-
-            // Try partial match if exact match not found
-            if (!data) {
-                const matchingKey = Object.keys(publishersCache).find(key =>
-                    key.includes(domain) || domain.includes(key)
-                );
-                if (matchingKey) {
-                    data = publishersCache[matchingKey];
-                }
-            }
-        }
+        const data = publishersCache[domain];
 
         if (!data) {
-            throw new Error('Publisher not found. Try a different ID or domain.');
+            throw new Error('Publisher not found in data cache.');
         }
 
         displayResults(data);
@@ -217,12 +182,12 @@ function setLoading(loading) {
         btnText.classList.add('hidden');
         btnLoader.classList.remove('hidden');
         searchBtn.disabled = true;
-        searchInput.disabled = true;
+        publisherSelect.disabled = true;
     } else {
         btnText.classList.remove('hidden');
         btnLoader.classList.add('hidden');
         searchBtn.disabled = false;
-        searchInput.disabled = false;
+        publisherSelect.disabled = false;
     }
 }
 

@@ -32,25 +32,25 @@ try {
     Write-Host "  Failed to fetch ecosystem: $_" -ForegroundColor Red
 }
 
-# Fetch popular publishers (you can customize this list)
-$publisherIds = @(1, 2, 3, 4, 5, 10, 20, 50, 100)
+# Fetch publishers by domain
+$publisherDomains = @("zone.msn.com", "microsoftcasualgames.com", "msn.com", "arkadium.com")
 $publishers = @{}
 
 Write-Host "`nFetching publisher data..." -ForegroundColor Yellow
-foreach ($id in $publisherIds) {
+foreach ($domain in $publisherDomains) {
     try {
-        $pub = Invoke-RestMethod -Uri "$API_BASE/publishers?id=$id" -Headers $headers -Method Get
-        $publishers[$id.ToString()] = $pub
+        $pub = Invoke-RestMethod -Uri "$API_BASE/publishers?domain=$domain" -Headers $headers -Method Get
+        $publishers[$domain] = $pub
         
-        # Also index by domain if available
-        if ($pub.domain) {
-            $publishers[$pub.domain] = $pub
+        # Also index by ID
+        if ($pub.publisher_id) {
+            $publishers[$pub.publisher_id.ToString()] = $pub
         }
         
-        Write-Host "  Fetched publisher ID $id" -ForegroundColor Green
+        Write-Host "  Fetched $domain" -ForegroundColor Green
         Start-Sleep -Milliseconds 200  # Rate limiting
     } catch {
-        Write-Host "  Failed to fetch publisher $id" -ForegroundColor Red
+        Write-Host "  Failed to fetch $domain" -ForegroundColor Red
     }
 }
 

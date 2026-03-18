@@ -16,18 +16,18 @@
 
         <section class="search-section">
             <div class="search-container">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Enter Publisher ID (e.g., 1) or Domain (e.g., businessinsider.com)"
-                    autocomplete="off"
-                >
+                <select id="publisherSelect">
+                    <option value="">-- Select a Publisher --</option>
+                    <option value="zone.msn.com">MSN Games (zone.msn.com)</option>
+                    <option value="microsoftcasualgames.com">Microsoft Casual Games (microsoftcasualgames.com)</option>
+                    <option value="msn.com">MSN (msn.com)</option>
+                    <option value="arkadium.com">Arkadium (arkadium.com)</option>
+                </select>
                 <button id="searchBtn" onclick="performSearch()">
-                    <span class="btn-text">Search</span>
+                    <span class="btn-text">View</span>
                     <span class="btn-loader hidden"></span>
                 </button>
             </div>
-            <p class="search-hint" id="searchHint">Auto-detects ID vs Domain</p>
         </section>
 
         <section id="errorSection" class="error-section hidden">
