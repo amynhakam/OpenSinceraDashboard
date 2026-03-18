@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSincera Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 OpenSincera Dashboard</h1>
+            <p class="subtitle">Publisher Intelligence & Supply Chain Transparency</p>
+        </header>
+
+        <section class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Enter Publisher ID (e.g., 1) or Domain (e.g., businessinsider.com)"
+                    autocomplete="off"
+                >
+                <button id="searchBtn" onclick="performSearch()">
+                    <span class="btn-text">Search</span>
+                    <span class="btn-loader hidden"></span>
+                </button>
+            </div>
+            <p class="search-hint" id="searchHint">Auto-detects ID vs Domain</p>
+        </section>
+
+        <section id="errorSection" class="error-section hidden">
+            <div class="error-card">
+                <span class="error-icon">⚠️</span>
+                <p id="errorMessage"></p>
+            </div>
+        </section>
+
+        <section id="resultsSection" class="results-section hidden">
+            <div class="publisher-header">
+                <div class="publisher-title">
+                    <h2 id="publisherName">Publisher Name</h2>
+                    <span id="statusBadge" class="status-badge">available</span>
+                </div>
+                <p id="publisherDescription" class="publisher-description"></p>
+            </div>
+
+            <div class="metrics-grid">
+                <!-- Basic Info -->
+                <div class="metric-card wide">
+                    <div class="metric-header">
+                        <span class="metric-icon">🌐</span>
+                        <h3>Domain & Type</h3>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-row">
+                            <span class="metric-label">Domain</span>
+                            <span id="domain" class="metric-value highlight"></span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Primary Supply Type</span>
+                            <span id="primarySupplyType" class="metric-value"></span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Publisher ID</span>
+                            <span id="publisherId" class="metric-value"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ads in View -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">👁️</span>
+                        <h3>Avg Ads in View</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="avgAdsInView" class="metric-big-value">-</span>
+                        <div class="progress-bar">
+                            <div id="avgAdsInViewBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Average ads visible in viewport</span>
+                    </div>
+                </div>
+
+                <!-- Ad Refresh -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🔄</span>
+                        <h3>Avg Ad Refresh</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="avgAdRefresh" class="metric-big-value">-</span>
+                        <span class="metric-unit">seconds</span>
+                        <div class="progress-bar">
+                            <div id="avgAdRefreshBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Time before ad unit refreshes</span>
+                    </div>
+                </div>
+
+                <!-- Unique GPIDs -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🆔</span>
+                        <h3>Total Unique GPIDs</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="totalUniqueGpids" class="metric-big-value">-</span>
+                        <div class="progress-bar">
+                            <div id="totalUniqueGpidsBar" class="progress-fill gpid" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Global Placement Identifiers</span>
+                    </div>
+                </div>
+
+                <!-- Page Weight -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">📦</span>
+                        <h3>Avg Page Weight</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="avgPageWeight" class="metric-big-value">-</span>
+                        <span class="metric-unit">MB</span>
+                        <div class="progress-bar inverted">
+                            <div id="avgPageWeightBar" class="progress-fill warning" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Higher = slower performance</span>
+                    </div>
+                </div>
+
+                <!-- CPU Usage -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">⚡</span>
+                        <h3>Avg CPU Usage</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="avgCpu" class="metric-big-value">-</span>
+                        <span class="metric-unit">seconds</span>
+                        <div class="progress-bar inverted">
+                            <div id="avgCpuBar" class="progress-fill warning" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Higher = more resource intensive</span>
+                    </div>
+                </div>
+
+                <!-- Supply Paths -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🛤️</span>
+                        <h3>Total Supply Paths</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="totalSupplyPaths" class="metric-big-value">-</span>
+                        <div class="progress-bar">
+                            <div id="totalSupplyPathsBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Ad delivery intermediaries</span>
+                    </div>
+                </div>
+
+                <!-- Reseller Count -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🏪</span>
+                        <h3>Reseller Count</h3>
+                    </div>
+                    <div class="metric-content centered">
+                        <span id="resellerCount" class="metric-big-value">-</span>
+                        <div class="progress-bar">
+                            <div id="resellerCountBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="metric-hint">Associated resellers</span>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="metric-card wide">
+                    <div class="metric-header">
+                        <span class="metric-icon">🏷️</span>
+                        <h3>Categories</h3>
+                    </div>
+                    <div class="metric-content">
+                        <div id="categoriesList" class="categories-container">
+                            <span class="category-tag">No categories</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="metric-icon">📊</span>
+                        <h3>Performance Metrics</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="metric-icon">🎯</span>
+                        <h3>Quality Radar</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="metric-icon">🔗</span>
+                        <h3>Supply Chain</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="supplyChainChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ecosystemSection" class="ecosystem-section">
+            <h2>📊 Ecosystem Overview</h2>
+            <div class="ecosystem-grid" id="ecosystemGrid">
+                <div class="eco-card">
+                    <span class="eco-value" id="ecoPublishers">-</span>
+                    <span class="eco-label">Publishers</span>
+                </div>
+                <div class="eco-card">
+                    <span class="eco-value" id="ecoAdSystems">-</span>
+                    <span class="eco-label">Ad Systems</span>
+                </div>
+                <div class="eco-card">
+                    <span class="eco-value" id="ecoGpids">-</span>
+                    <span class="eco-label">Global GPIDs</span>
+                </div>
+                <div class="eco-card">
+                    <span class="eco-value" id="ecoLastUpdated">-</span>
+                    <span class="eco-label">Last Updated</span>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Powered by <a href="https://open.sincera.io" target="_blank">OpenSincera API</a> | The Trade Desk</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+name: Sync OpenSincera Data
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch ecosystem data
+        run: |
+          mkdir -p data
+          curl -s -H "Authorization: Bearer ${{ secrets.OPENSINCERA_API_KEY }}" \
+               -H "Content-Type: application/json" \
+               "https://open.sincera.io/api/ecosystem" \
+               -o data/ecosystem.json
+
+      - name: Fetch publisher data
+        run: |
+          echo '{}' > data/publishers.json
+          # Publisher IDs to sync — add more as needed
+          IDS="1 2 3 4 5 10 20 50 100 200 500 1000"
+          for id in $IDS; do
+            echo "Fetching publisher $id..."
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.OPENSINCERA_API_KEY }}" \
+                 -H "Content-Type: application/json" \
+                 "https://open.sincera.io/api/publishers?id=$id")
+            
+            # Extract domain from response
+            DOMAIN=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('domain',''))" 2>/dev/null || echo "")
+            
+            # Add to publishers.json keyed by both ID and domain
+            python3 -c "
+          import json, sys
+          with open('data/publishers.json') as f:
+              publishers = json.load(f)
+          data = json.loads('''$RESPONSE''')
+          publishers['$id'] = data
+          if '$DOMAIN':
+              publishers['$DOMAIN'] = data
+          with open('data/publishers.json', 'w') as f:
+              json.dump(publishers, f)
+          "
+            sleep 0.3  # Rate limiting
+          done
+          echo "Done fetching publishers"
+
+      - name: Create metadata
+        run: |
+          python3 -c "
+          import json
+          from datetime import datetime, timezone
+          meta = {
+              'lastUpdated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'source': 'OpenSincera API'
+          }
+          with open('data/publishers.json') as f:
+              meta['publisherCount'] = len(json.load(f))
+          with open('data/metadata.json', 'w') as f:
+              json.dump(meta, f, indent=2)
+          "
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No data changes"
+          else
+            git commit -m "chore: daily data sync $(date -u +%Y-%m-%d)"
+            git push
+          fi
